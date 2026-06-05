@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{procedure.code}}</title>
+
+    <style>
+        @page {
+            size: A4;
+            margin: 5mm 15mm;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            color: #000;
+        }
+
+        /* ================== HEADER ================== */
+        .header {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .logo img {
+
+            width: 100px;
+        }
+
+        .title {
+
+            text-align: center;
+
+        }
+
+        .title h1 {
+            font-size: 16px;
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        /* ================== INFO ================== */
+        .info {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .info td {
+            padding: 3px 4px;
+            vertical-align: top;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        /* ================== TABLE ================== */
+        table.history {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table.history th,
+        table.history td {
+            border: 1px solid #333;
+            padding: 6px;
+            font-size: 11px;
+        }
+
+        table.history th {
+            background-color: #f2f2f2;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        table.history td {
+            vertical-align: top;
+            text-align: center;
+        }
+
+        /* ================== BADGES ================== */
+        .badge {
+            display: inline-block;
+            padding: 3px 7px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: bold;
+            color: #fff;
+            margin-top: 4px;
+        }
+
+        .text-bg-info {
+            background-color: #1976d2;
+        }
+
+        .text-bg-primary {
+            background-color: #6a1b9a;
+        }
+
+        .text-bg-warning {
+            background-color: #ef6c00;
+        }
+
+        .text-bg-danger {
+            background-color: #7a3506;
+        }
+
+        .text-bg-success {
+            background-color: #2e7d32;
+        }
+
+        .text-bg-dark {
+            background-color: #000000;
+        }
+
+        .finalize-comment {
+
+            text-align: justify;
+            font-size: 10px;
+
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- ================== HEADER ================== -->
+    <div class="header">
+        <div class="logo">
+
+            <img src="{{ company_logo }}" alt="Logo">
+
+        </div>
+        <div class="title">
+            <div class="subtitle">{{company.name}}</div>
+            <h1>HISTORIAL DE TRÁMITE GENERAL</h1>
+        </div>
+    </div>
+
+    <!-- ================== INFO ================== -->
+    <table class="info">
+        <tr>
+            <td>
+                <span class="label">Remitente:</span> {{ procedure.sender_name }}
+            </td>
+            <td class="right">
+                <!-- <span class="label">N° Registro:</span> {{ procedure.code }} -->
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="label">Origen:</span> {{ procedure.from_area.name }}
+            </td>
+            <td class="right">
+                <span class="label">Expediente:</span> {{ procedure.code }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="label">Documento:</span> {{ procedure.document_type.name }}
+            </td>
+            <td class="right">
+                <span class="label">Fecha:</span> {{ procedure.created_at|date:"d-m-Y" }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="label">Folios:</span> {{ procedure.folios }}
+            </td>
+            <td class="right">
+                <span class="label">Área destino:</span> {{ procedure.to_area.name }}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <span class="label">Asunto:</span> {{ procedure.subject }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- ================== HISTORIAL ================== -->
+    <table class="history">
+        <thead>
+            <tr>
+                <th>Origen</th>
+                <th>Destino</th>
+                <th>Fecha</th>
+                <th>Responsable</th>
+                <th>Observaciones / Comentarios</th>
+                <th>Estado Trámite</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in flows %}
+            <tr>
+                <td>{% firstof f.flow.from_area.name "-" %}</td>
+                <td>{% firstof f.flow.to_area.name "-" %}</td>
+                <td>{{ f.flow.created_at|date:"d-m-Y h:i:s A" }}</td>
+                <td>
+                    {{ f.flow.sent_by.name }}
+                    {{ f.flow.sent_by.surname|default:"" }}
+                </td>
+                <td>
+
+                    {% if f.flow.comment %}
+                    <div>
+                        {{ f.flow.comment }}
+                    </div>
+                    {% endif %}
+
+                    {% if f.flow.finalize_comment %}
+
+                    <div class="finalize-comment">
+
+                        {{ f.flow.finalize_comment }}
+
+                        <br><br>
+
+                        <small>
+
+                            <b>Registrado:</b>
+
+                            {{ f.flow.sent_by.name }}
+
+                            {{ f.flow.sent_by.surname|default:"" }}
+
+                        </small>
+
+                        <span>
+
+                            <b>Cargo:</b>
+
+                            {{f.flow.to_area.initials}}
+
+                        </span>
+
+                    </div>
+
+                    {% endif %}
+
+                </td>
+                <td>
+
+                    <p>
+                        {% if f.flow.subject_derivar %}
+                        {{ f.flow.subject_derivar }}
+                        {% else %}
+                        {{ f.flow.subject }}
+                        {% endif %}
+                    </p>
+
+                    <span class="badge {{ f.status.class }}">
+                        {{ f.status.label }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+
+</html>

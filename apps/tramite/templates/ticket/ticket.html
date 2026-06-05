@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{procedure.code}}</title>
+
+    <style>
+        @page {
+            size: 80mm 180mm;
+            margin: 4mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 9px;
+            line-height: 1.25;
+            margin: 0;
+            padding: 0;
+            color: #000;
+            text-align: center;
+        }
+
+        /* ================= LOGO ================= */
+        .logo {
+            margin-bottom: 4mm;
+        }
+
+        .logo img {
+            width: 100px;
+            max-height: 25mm;
+        }
+
+        /* ================= TITULO ================= */
+        .title {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 2mm;
+        }
+
+        /* ================= INFO ================= */
+        .info {
+            font-size: 8.5px;
+            margin-bottom: 3mm;
+        }
+
+        .info div {
+            margin-bottom: 1mm;
+        }
+
+        /* ================= DIVIDER ================= */
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 3mm 0;
+        }
+
+        /* ================= MENSAJE ================= */
+        .message {
+            font-size: 9px;
+            font-weight: bold;
+            margin: 3mm 0;
+        }
+
+        /* ================= QR ================= */
+        .qr {
+            margin: 4mm 0;
+        }
+
+        .qr img {
+            width: 40mm;
+            height: 40mm;
+        }
+
+        /* ================= CODIGO ================= */
+        .code {
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-top: 2mm;
+        }
+
+        /* ================= FOOTER ================= */
+        .footer {
+            font-size: 7.5px;
+            margin-top: 4mm;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- LOGO -->
+    <div class="logo">
+        <img src="{{ company_logo }}" alt="Logo">
+    </div>
+
+    <!-- TITULO -->
+    <div class="title">
+        ADEA ANDAHUAYLAS
+    </div>
+
+    <!-- INFO -->
+    <div class="info">
+        <div>Av. Perú N° 369</div>
+        <div>Andahuaylas Apurímac Perú</div>
+        <div>893727791</div>
+        <div>asist.operaciones@adea.org.pe</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- MENSAJE -->
+    <div class="message">
+        Escanea el código QR para<br>
+        dar seguimiento al documento
+    </div>
+
+    <!-- QR -->
+    <div class="qr">
+        <img src="{{ qr_base64 }}">
+    </div>
+
+    <!-- CODIGO -->
+    <div class="code">
+        {{ codigo }}
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        Conserve este ticket para consultas
+    </div>
+
+</body>
+
+</html>
