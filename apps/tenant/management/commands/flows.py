@@ -9,12 +9,12 @@ import re
 
 
 STATUS_MAP = {
-    "Enviado": ProcedureFlow.SENT,
-    "Recepcionado": ProcedureFlow.RECEIVED,
-    "Finalizado": ProcedureFlow.FINALIZED,
+    "E": ProcedureFlow.SENT,
+    "R": ProcedureFlow.RECEIVED,
+    "A": ProcedureFlow.FINALIZED,
     "Por finalizar": ProcedureFlow.SENT,
-    "Observado": ProcedureFlow.OBSERVED,
-    "Rechazado": ProcedureFlow.REJECTED,
+    "O": ProcedureFlow.OBSERVED,
+    "Z": ProcedureFlow.REJECTED,
 }
 
 FINAL_STATES = {"Finalizado"}
@@ -28,18 +28,20 @@ class Command(BaseCommand):
                 SELECT
                     h.*,
                     t.codigo AS tramite_codigo,
-                    t.agency_id AS tramite_agency_id,
+                 
                     ao.initials AS origen_initials,
                     ad.initials AS destino_initials,
-                    ad.type_tramite AS destino_type, 
-                    u.username AS username
+                    ad.type_tramite AS destino_type
+                   
                 FROM historicos h
                 INNER JOIN tramites t ON t.id = h.tramite_id
                 LEFT JOIN areas ao ON ao.id = h.origen_id
                 LEFT JOIN areas ad ON ad.id = h.destino_id
-                LEFT JOIN users u ON u.id = h.user_id
-              
+      
+                WHERE YEAR(t.created_at) = 2026    
+                           
                 ORDER BY h.tramite_id, h.secuencia
+                           
               
             """)
 
@@ -47,7 +49,7 @@ class Command(BaseCommand):
             rows = cursor.fetchall()
             total = len(rows)
 
-
+        user = User.objects.first()
         for row in rows:
 
             data = dict(zip(columns, row))
@@ -58,7 +60,7 @@ class Command(BaseCommand):
             try:    
                 procedure = Procedure.objects.get(
                     code=normalized_code,
-                    agency_id=data["tramite_agency_id"]
+                    from_area__type=data["tipo_tramite"]
                 )
             except Procedure.DoesNotExist:
 
@@ -77,16 +79,10 @@ class Command(BaseCommand):
                 from_area_final = first_area
 
             else:
-
                 
                 from_area_final = from_area
 
-            user = User.objects.filter(
-                username=data["username"]
-            ).first()
-
-
-            if not to_area or not user:
+            if not to_area:
 
                 continue
 
@@ -119,32 +115,13 @@ class Command(BaseCommand):
             # =====================================================
             # FLOW TYPE + STATUS
             # =====================================================
-            if data["solo_visualizacion"] == 1:
-                flow_type = ProcedureFlow.COPY
+   
+            flow_type = ProcedureFlow.NORMAL
 
-                if data["operacion_tramite"] == "RZ":
-                    status = ProcedureFlow.REJECTED
-                elif data["operacion_tramite"] == "CP":
-                    status = ProcedureFlow.SENT
-                else:
-                    status = ProcedureFlow.RECEIVED
-
-            else:
-
-                flow_type = ProcedureFlow.NORMAL
-
-                if (data["estado_tramite"] == "Por finalizar" and data["operacion_tramite"] == "PT"):
-
-                    status = ProcedureFlow.RECEIVED
-
-                else:
                     
-                    status = STATUS_MAP.get(data["estado_tramite"], ProcedureFlow.SENT)
+            status = STATUS_MAP.get(data["estado_tramite"], ProcedureFlow.SENT)
 
-            is_active = (
-                    data["estado"] == "V"
-                    or data["estado_tramite"] == "Observado"
-            )
+            is_active = (data["estado"] == "V")
 
             procedure = ProcedureFlow.objects.create(
                 procedure=procedure,
@@ -157,7 +134,6 @@ class Command(BaseCommand):
                 comment=comment,
                 sent_by=user,
                 sequence=data["secuencia"],
-
                 origin_options=origin_options,
                 is_active=is_active,
                 is_to_finalize = data["estado_tramite"] == "Por finalizar" or data["operacion"] == "PF",

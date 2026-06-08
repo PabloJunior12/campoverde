@@ -327,19 +327,20 @@ class Procedure(models.Model):
         return self.is_blocked or self.is_expired
 
     def __str__(self):
+
         return self.code
 
 def procedure_file_path(instance, filename):
 
     procedure = instance.procedure
 
-    agency_id = procedure.agency_id
+    tramite_type = procedure.from_area.type
 
     ext = filename.split('.')[-1]
 
     return (
         f"procedures/"
-        f"agency_{agency_id}/"
+        f"{tramite_type}/"
         f"procedure_{procedure.id}/"
         f"{uuid.uuid4()}.{ext}"
     )

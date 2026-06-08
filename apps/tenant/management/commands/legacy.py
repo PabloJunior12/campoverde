@@ -67,7 +67,10 @@ class Command(BaseCommand):
                 tramite_type = item["tipo_tramite"]
                 user = User.objects.first()
                 agency = Agency.objects.first()
-                document = Document.objects.get(code=item["document_code"])
+                document = (
+                    Document.objects.filter(code=item["document_code"]).first()
+                    or Document.objects.first()
+                )
        
                 from_area = Area.objects.filter(
                     initials__iexact=item["origen_initials"]
@@ -89,18 +92,6 @@ class Command(BaseCommand):
                     
                     from_area_final = from_area
 
-                # department_id = item.get("department_id")
-                # province_id = item.get("province_id")
-                # district_id = item.get("district_id")
-
-                # if not department_id or not province_id or not district_id:
-                #     department, province, district = resolve_location_from_procedencia(
-                #         item.get("procedencia")
-                #     )
-
-                #     department_id = department.id if department else None
-                #     province_id = province.id if province else None
-                #     district_id = district.id if district else None
 
                 is_annulled = item['status'] == 'anulado'
 
@@ -131,18 +122,15 @@ class Command(BaseCommand):
                 procedure.save(update_fields=["created_at"])
 
 
-                # migrate_procedure_files(
-                #     procedure=procedure,
-                #     filenames=item.get("archivo"),
-                #     user=user
-                # )
+                migrate_procedure_files(
+                    procedure=procedure,
+                    filenames=item.get("archivo"),
+                )
 
                 # 🔢 Calcular secuencia
                 seq, year = extract_sequence_and_year(item["codigo"])
 
                 if seq is not None and year is not None:
-
-                    
 
                     key = (tramite_type, year)
 

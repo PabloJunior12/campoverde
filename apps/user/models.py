@@ -3,36 +3,56 @@ from django.db import models
 from apps.tramite.models import Agency
 
 class CustomUserManager(BaseUserManager):
-    
-    def create_user(self, email, username, password=None, **extra_fields):
-        if not email:
-            raise ValueError('El email es obligatorio')
+
+    def create_user(self, username, password=None, email=None, **extra_fields):
+
         if not username:
             raise ValueError('El username es obligatorio')
 
-        email = self.normalize_email(email)
+        # Solo normalizar si existe email
+        if email:
+            email = self.normalize_email(email)
+
         extra_fields.setdefault('is_active', True)
-        user = self.model(email=email, username=username, **extra_fields)
+
+        user = self.model(
+            email=email,
+            username=username,
+            **extra_fields
+        )
+
         user.set_password(password)
         user.save(using=self._db)
+
         return user
 
-    def create_superuser(self, email, username, password=None, **extra_fields):
+    def create_superuser(self, username, password=None, email=None, **extra_fields):
+
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('El superusuario debe tener is_staff=True.')
+
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('El superusuario debe tener is_superuser=True.')
 
-        return self.create_user(email, username, password, **extra_fields)
+        return self.create_user(
+            username=username,
+            password=password,
+            email=email,
+            **extra_fields
+        )
 
 class User(AbstractBaseUser, PermissionsMixin):
 
     name = models.CharField(max_length=150)
     surname = models.CharField(max_length=150, blank=True, null=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(
+        unique=True,
+        blank=True,
+        null=True
+    )
     username = models.CharField(max_length=150, unique=True)  # Nuevo campo username
     phone = models.CharField(max_length=15, blank=True, null=True)
 
@@ -43,7 +63,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'username'  # <<< Cambiar a username como identificador principal
-    REQUIRED_FIELDS = ['email', 'name']  # Email ahora es campo obligatorio adicional
+    REQUIRED_FIELDS = ['name']  # Email ahora es campo obligatorio adicional
 
     # 🔐 PERMISOS FUNCIONALES DEL SISTEMA
     can_void_procedure = models.BooleanField(

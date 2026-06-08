@@ -67,30 +67,38 @@ class UserSerializer(serializers.ModelSerializer):
         areas_data = validated_data.pop('user_areas', [])
         password = validated_data.pop('password', None)
 
-        user = User(**validated_data)
- 
-        if password:
+        # Email opcional
+        if validated_data.get('email') == '':
+            validated_data['email'] = None
 
+        user = User(**validated_data)
+
+        if password:
             user.set_password(password)
 
         user.save()
 
         # Crear permisos asociados
         for perm in permissions_data:
-            UserPermission.objects.create(user=user, module=perm['module'])
+            UserPermission.objects.create(
+                user=user,
+                module=perm['module']
+            )
 
-        # 🌍 Crear permisos globales
+        # Permisos globales
         GlobalPermission.objects.create(
             user=user,
             **(global_data or {'allowed_actions': []})
         )
 
-        # 🏢 Áreas
+        # Áreas
         for area in areas_data:
+            UserArea.objects.create(
+                user=user,
+                area=area['area']
+            )
 
-            UserArea.objects.create(user=user, area=area['area'])
-
-            return user
+        return user
 
     def update(self, instance, validated_data):
 
