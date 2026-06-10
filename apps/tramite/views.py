@@ -1,4 +1,4 @@
-from .serializers import CompanySerializer, ProvinceSerializer, SubsanarFlowSerializer, ProcedureCodePreviewSerializer, SystemBackupSerializer, GlobalBackupSerializer,  DepartmentSerializer, ProcedureUpdateCopiesSerializer, DistrictSerializer, ProcedureAnnulSerializer,  WorkScheduleSerializer, HolidaySerializer, ProcedureUpdateSerializer, ResendObservedFlowSerializer, RejectFlowSerializer, ObservedFlowSerializer, AreaSerializer, FinalizeFlowSerializer, DeriveFlowSerializer, ProcedureFlowSerializer, ReceiveFlowSerializer, DocumentSerializer, ProcedureListSerializer, MyAreaSerializer, AgencySerializer, ProcedureCreateSerializer
+from .serializers import CompanySerializer, AdminProcedureUpdateSerializer, ProcedureFlowUpdateSerializer,  ProvinceSerializer, ProcedureDetailSerializer, SubsanarFlowSerializer, ProcedureCodePreviewSerializer, SystemBackupSerializer, GlobalBackupSerializer,  DepartmentSerializer, ProcedureUpdateCopiesSerializer, DistrictSerializer, ProcedureAnnulSerializer,  WorkScheduleSerializer, HolidaySerializer, ProcedureUpdateSerializer, ResendObservedFlowSerializer, RejectFlowSerializer, ObservedFlowSerializer, AreaSerializer, FinalizeFlowSerializer, DeriveFlowSerializer, ProcedureFlowSerializer, ReceiveFlowSerializer, DocumentSerializer, ProcedureListSerializer, MyAreaSerializer, AgencySerializer, ProcedureCreateSerializer
 from .models import Company, Department, Province, District, UserArea, Area, Document, Agency, Procedure, ProcedureFlow, GlobalBackup, ProcedureFile, Holiday, WorkSchedule, SystemBackup
 
 from rest_framework import status, viewsets, generics
@@ -332,13 +332,13 @@ class ProcedureCreateAPIView(APIView):
             )
 
         # ❌ Fuera de horario laboral
-        if schedule_status == ScheduleResult.OUT_OF_SCHEDULE:
-            return Response(
-                {
-                    "error": "El registro de trámites solo está disponible dentro del horario laboral."
-                },
-                status=status.HTTP_403_FORBIDDEN
-            )
+        # if schedule_status == ScheduleResult.OUT_OF_SCHEDULE:
+        #     return Response(
+        #         {
+        #             "error": "El registro de trámites solo está disponible dentro del horario laboral."
+        #         },
+        #         status=status.HTTP_403_FORBIDDEN
+        #     )
 
         serializer = ProcedureCreateSerializer(
             data=request.data,
@@ -1327,6 +1327,40 @@ class ProcedureHistorySimplicadoPDFAPIView(APIView):
 
         return response
 
+# CAMPO VERDE
+
+class ProcedureCampoVerdePDFAPIView(APIView):
+
+    def get(self, request, procedure_id):
+
+        company = Company.objects.first()
+        logo_path = request.build_absolute_uri("/media/logo.png")
+
+        procedure = (
+            Procedure.objects
+            .select_related("created_by")
+            .get(id=procedure_id)
+        )
+
+        html_string = render_to_string(
+            "reports/campoverde.html",
+            {
+                "company": company,
+                "procedure": procedure,
+                "company_logo": logo_path
+            }
+        )
+
+        html = HTML(string=html_string, base_url=request.build_absolute_uri())
+        pdf = html.write_pdf()
+
+        response = HttpResponse(pdf, content_type="application/pdf")
+        response["Content-Disposition"] = (
+            f'inline; filename="reporte_tramite_{procedure.code}.pdf"'
+        )
+
+        return response
+
 # TICKET
 class TicketProcedureAPIView(APIView):
 
@@ -1592,4 +1626,136 @@ class BackupDownloadView(APIView):
             open(backup.file_path, "rb"),
             as_attachment=True,
             filename=backup.filename
+        )
+    
+class ProcedureSearchAPIView(APIView):
+
+    def get(self, request):
+
+        code = request.query_params.get('code')
+        type_tramite = request.query_params.get('type')
+
+        if not code:
+
+            return Response({
+                'detail': 'El código es requerido'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        procedure = (
+            Procedure.objects
+            .select_related(
+                'document_type',
+                'to_area'
+            )
+            .prefetch_related(
+                'flows',
+                'flows__from_area',
+                'flows__to_area',
+                'flows__sent_by'
+            )
+            .filter(
+                code=code,
+                from_area__type=type_tramite
+            )
+            .first()
+        )
+
+        if not procedure:
+
+            return Response({
+                'detail': 'Expediente no encontrado'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProcedureDetailSerializer(procedure)
+
+        return Response(serializer.data)
+    
+# ADMIN PROCEDURE UPDATE
+
+
+class AdminProcedureUpdateAPIView(APIView):
+
+    @transaction.atomic
+    def put(self, request, pk):
+
+        procedure = get_object_or_404(Procedure, pk=pk)
+
+        serializer = AdminProcedureUpdateSerializer(
+            procedure,
+            data=request.data,
+            context={
+                "request": request,
+                "procedure": procedure
+            }
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # 📎 Archivos nuevos
+        for file in request.FILES.getlist("files"):
+            ProcedureFile.objects.create(
+                procedure=procedure,
+                file=file,
+                uploaded_by=request.user
+            )
+
+        # ❌ Archivos eliminados
+        deleted_files = request.data.getlist("deleted_files")
+
+        if deleted_files:
+            ProcedureFile.objects.filter(
+                id__in=deleted_files,
+                procedure=procedure
+            ).delete()
+
+        return Response(
+            {"message": "Trámite actualizado exitosamente"},
+            status=status.HTTP_200_OK
+        )
+
+class ProcedureFlowUpdateView(APIView):
+
+    @transaction.atomic
+    def post(self, request, flow_id):
+
+        flow = get_object_or_404(
+            ProcedureFlow,
+            id=flow_id,
+            flow_type=ProcedureFlow.NORMAL,
+        )
+
+        serializer = ProcedureFlowUpdateSerializer(
+            flow,
+            data=request.data,
+            partial=True,
+            context={
+                "request": request,
+                "flow": flow
+            }
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {"message": "Trámite actualizado correctamente"},
+            status=status.HTTP_200_OK
+        )
+    
+class ProcedureFlowDeleteView(APIView):
+
+    @transaction.atomic
+    def delete(self, request, flow_id):
+
+        flow = get_object_or_404(
+            ProcedureFlow,
+            id=flow_id,
+        )
+
+        flow.delete()
+
+        return Response(
+            {"message": "Flujo eliminado correctamente"},
+            status=status.HTTP_200_OK
         )

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <style>
+        @page {
+            size: A4;
+            margin: 20px;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            color: #000;
+        }
+
+        .header {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .header img {
+            width: 85px;
+            height: 80px;
+        }
+
+        .municipality {
+            position: absolute;
+            top: 10px;
+            left: 100px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            line-height: 20px;
+        }
+
+        .title {
+            text-transform: uppercase;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .row {
+            width: 100%;
+            margin-bottom: 8px;
+            clear: both;
+        }
+
+        .left {
+            float: left;
+            width: 60%;
+            margin-bottom: 5px;
+        }
+
+        .right {
+            float: right;
+            width: 35%;
+            text-align: right;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        table th {
+            border: 1px solid #000;
+            padding: 8px;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        table td {
+            border: 1px solid #000;
+            padding: 10px;
+            height: 60px;
+            vertical-align: top;
+            font-size: 11px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .actions {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .actions-column {
+            width: 33%;
+            float: left;
+            line-height: 22px;
+        }
+
+        hr {
+            margin-top: 30px;
+        }
+
+        .watermark {
+            position: fixed;
+            top: 35%;
+            left: 20%;
+            width: 60%;
+            text-align: center;
+            z-index: -1;
+            opacity: 0.08;
+        }
+
+        .watermark img {
+            width: 400px;
+            height: auto;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="watermark">
+        <img src="{{ company_logo }}">
+    </div>
+
+    <div class="header">
+
+        <img src="{{ company_logo }}">
+
+        <div class="municipality">
+            {{ company.name }}
+        </div>
+
+    </div>
+
+    <div class="title">
+        {{ procedure.from_area.get_type_display }}
+    </div>
+
+    <div class="row">
+        <div class="left">
+            <span class="label">Remitente:</span>
+            {{ procedure.sender_name }}
+        </div>
+
+        <div class="right">
+            <span class="label">N° Registro Doc:</span>
+            {{ procedure.id }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="left">
+            <span class="label">Origen:</span>
+            {{ procedure.from_area.name }}
+        </div>
+
+        <div class="right">
+            <span class="label">Expediente:</span>
+            {{ procedure.code }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="left">
+            <span class="label">Documento:</span>
+            {{ procedure.document_type.name }} {{ procedure.document_number }}
+        </div>
+
+        <div class="right">
+            <span class="label">Fecha:</span>
+            {{ procedure.created_at|date:"d-m-Y H:i:s" }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="left">
+            <span class="label">Folios:</span>
+            {{ procedure.folios }}
+        </div>
+
+        <div class="right">
+            <span class="label">Área destino:</span>
+            {{ procedure.to_area.name }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div>
+            <span class="label">Asunto:</span>
+            {{ procedure.subject }}
+        </div>
+    </div>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th style="width:20%">Org. Destino</th>
+                <th style="width:15%">Acciones</th>
+                <th style="width:15%">Fecha</th>
+                <th style="width:25%">Observaciones</th>
+                <th style="width:25%">
+                    Sello y firma Responsable
+                </th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for i in "1234567" %}
+
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    <div class="section-title">
+        Acciones a tomar
+    </div>
+
+    <div class="actions">
+
+        <div class="actions-column">
+            1) Conocimiento y fines <br>
+            2) Trámite <br>
+            3) Informe <br>
+            4) Ayuda Memoria <br>
+            5) Devolver
+        </div>
+
+        <div class="actions-column">
+            6) Coordinación <br>
+            7) Atención <br>
+            8) Opinión <br>
+            9) Conocimiento <br>
+            10) V°B°
+        </div>
+
+        <div class="actions-column">
+            11) Evaluación y Calificación <br>
+            12) Elaborar Contestación <br>
+            13) Archivo <br>
+            14) Autorizado <br>
+            15) Otros
+        </div>
+
+    </div>
+
+    <div style="clear: both;"></div>
+
+    <hr>
+
+</body>
+
+</html>

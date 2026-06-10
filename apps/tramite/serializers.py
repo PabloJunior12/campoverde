@@ -349,19 +349,15 @@ class ProcedureCreateSerializer(serializers.Serializer):
 
             created = []
 
-            main_agency = Agency.objects.get(
-                id=settings.MAIN_AGENCY_ID
-            )
+            # main_agency = Agency.objects.get(
+            #     id=settings.MAIN_AGENCY_ID
+            # )
 
             for area in destination_areas:
 
-                origin_agency = (
-                    area.agency
-                    if is_virtual
-                    else from_area.agency
-                )
+                origin_agency = ( area.agency if is_virtual else from_area.agency )
 
-                destination_agency = area.agency
+                # destination_agency = area.agency
 
                 now_date = now()
 
@@ -373,6 +369,7 @@ class ProcedureCreateSerializer(serializers.Serializer):
                     agency=origin_agency,
                     created_by=user,
                     from_area=from_area,
+                    tramite_type=from_area.type,
                     to_area=area,
                     tracking_code=tracking_code,
                     due_date=calculate_due_date(now_date),
@@ -440,9 +437,7 @@ class ProcedureCreateSerializer(serializers.Serializer):
                 # 5. GENERAR CORRELATIVO
                 # =====================================
 
-                procedure.code = generate_procedure_code(
-                    origin_agency
-                )
+                procedure.code = generate_procedure_code(from_area)
 
                 # =====================================
                 # 5. GENERAR ERROR DE PRUEBA
@@ -454,17 +449,17 @@ class ProcedureCreateSerializer(serializers.Serializer):
                 # 6. GENERAR CÓDIGO DESTINO
                 # =====================================
 
-                if (
-                    not is_virtual and
-                    destination_agency.id == main_agency.id and
-                    origin_agency.id != main_agency.id
-                ):
+                # if (
+                #     not is_virtual and
+                #     destination_agency.id == main_agency.id and
+                #     origin_agency.id != main_agency.id
+                # ):
 
-                    procedure.code_destino = (
-                        generate_procedure_code(
-                            main_agency
-                        )
-                    )
+                #     procedure.code_destino = (
+                #         generate_procedure_code(
+                #             main_agency
+                #         )
+                #     )
 
                 # =====================================
                 # 7. CONFIRMAR REGISTRO
@@ -1262,3 +1257,159 @@ class SubsanarFlowSerializer(serializers.Serializer):
         first_flow.save()
 
         return first_flow
+
+##### CONSULTAR
+
+class ProcedureFlowSeachSerializer(serializers.ModelSerializer):
+
+    procedure = ProcedureListSerializer()
+    from_area = AreaSerializer()
+    to_area = AreaSerializer()
+    is_copy = serializers.SerializerMethodField()
+    original_finalizado = serializers.BooleanField(read_only=True)
+
+    class Meta:
+
+        model = ProcedureFlow
+        fields = '__all__'
+
+    def get_is_copy(self, obj):
+
+        return obj.flow_type == ProcedureFlow.COPY
+
+class ProcedureDetailSerializer(serializers.ModelSerializer):
+
+    flows = ProcedureFlowSeachSerializer(many=True,read_only=True)
+
+    files = ProcedureFileSerializer(many=True, read_only=True)
+    department = DepartmentSerializer()
+    province = ProvinceSerializer()
+    district = DistrictSerializer()
+    from_area = AreaSerializer()
+    to_area = AreaSerializer()
+    document_type = DocumentSerializer()
+    agency = AgencySerializer()
+    copies = serializers.SerializerMethodField()  # 👈 CLAVE
+    is_rejected = serializers.SerializerMethodField()  # 👈 NUEVO
+    reject_comment = serializers.SerializerMethodField()  
+
+    class Meta:
+
+        model = Procedure
+        fields = '__all__'
+
+    def get_copies(self, obj):
+        copies = (
+            ProcedureFlow.objects
+            .filter(
+                procedure=obj,
+                flow_type=ProcedureFlow.COPY
+            )
+            .select_related("to_area")
+            .order_by("sequence")
+        )
+        return ProcedureCopySerializer(copies, many=True).data
+
+    def get_is_rejected(self, obj):
+        return obj.flows.filter(
+            status=ProcedureFlow.REJECTED,
+            is_active=True
+        ).exists()
+
+    def get_reject_comment(self, obj):
+        flow = obj.flows.filter(
+            status=ProcedureFlow.REJECTED,
+            is_active=True
+        ).first()  # por seguridad
+
+        return flow.comment if flow else None
+
+# UPDATE FLOW
+
+
+class AdminProcedureUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Procedure
+        fields = [
+            "document_type",
+            "document_number",
+            "folios",
+            "subject",
+
+            "sender_dni",
+            "sender_name",
+            "sender_address",
+            "sender_phone",
+            "sender_email",
+
+            # ✅ UBICACIÓN
+            "department",
+            "province",
+            "district",
+
+            "from_area",
+            "to_area",
+            "is_virtual",
+        ]
+
+    # def validate(self, data):
+
+    #     procedure: Procedure = self.context["procedure"]
+
+    #     flows_qs = ProcedureFlow.objects.filter(procedure=procedure, flow_type=ProcedureFlow.NORMAL)
+
+    #     # ❌ No editable si tiene más de 1 flujo
+    #     if flows_qs.count() > 1:
+    #         raise serializers.ValidationError(
+    #             "Este trámite no se puede editar porque ya tiene más de un flujo"
+    #         )
+
+    #     return data
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+
+        """
+        - Actualiza Procedure
+        - Si existe 1 flow, sincroniza subject y to_area
+        """
+
+        # 1️⃣ Actualizar Procedure
+        procedure = super().update(instance, validated_data)
+
+        # 2️⃣ Obtener el único flujo (si existe)
+        # flow = (
+        #     ProcedureFlow.objects
+        #     .filter(procedure=procedure)
+        #     .order_by("created_at")
+        #     .first()
+        # )
+
+        # if flow:
+        #     update_fields = []
+
+        #     if "subject" in validated_data:
+        #         flow.subject = procedure.subject
+        #         update_fields.append("subject")
+
+        #     if "to_area" in validated_data:
+        #         flow.to_area = procedure.to_area
+        #         update_fields.append("to_area")
+
+        #     if update_fields:
+        #         flow.save(update_fields=update_fields)
+
+        return procedure
+
+
+class ProcedureFlowUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = ProcedureFlow
+        fields = '__all__'
+
+
+ 
+

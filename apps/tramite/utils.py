@@ -125,18 +125,19 @@ def resolve_sequence_agency(destination_area: Area) -> Agency:
 
     return destination_area.agency
 
-def generate_procedure_code(agency: Agency) -> str:
+def generate_procedure_code(area: Area) -> str:
 
     year = timezone.now().year
-
+    tramite_type = area.type
+    
     sequence, _ = (
         ProcedureSequence.objects
         .select_for_update()
         .get_or_create(
-            agency=agency,
+            tramite_type=tramite_type,
             year=year,
             defaults={
-                "last_number": agency.start_sequence - 1
+                "last_number": 1 - 1
             }
         )
     )
@@ -307,7 +308,6 @@ def send_procedure_rejected_email(procedure, comment=""):
     )
 
     email.send(fail_silently=False)
-
 
 def build_procedure_email_html(procedure, is_out_of_schedule):
     status_block = ""

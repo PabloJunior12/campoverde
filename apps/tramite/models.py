@@ -464,6 +464,7 @@ class ProcedureFlow(models.Model):
         null=True,
         blank=True
     )
+    
     sent_at = models.DateTimeField(
         null=True, blank=True
     )

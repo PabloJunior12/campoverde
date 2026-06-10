@@ -1,6 +1,6 @@
 from rest_framework import routers
 from django.urls import path
-from .views import CompanyViewSet, GlobalBackupView, GlobalBackupDownloadView, CheckScheduleAPIView, ProcedureConsultAPIView, SubsanarProcedureFlowAPIView, ProcedureCodePreviewAPIView, ProcedureHistorySimplicadoPDFAPIView, HolidayViewSet, WorkScheduleViewSet, ProcedureListVirtualesAPIView, VirtualFlowListAPIView, ProcedureVirtualCreateAPIView, UpdateProcedureCopiesAPIView, CopyInboxPendingAPIView, CopyInboxApprovedAPIView, TicketProcedureAPIView, ProcedureAnnulAPIView, ProcedureUpdateAPIView, SentFlowListAPIView, FlowDashboardAPIView, ProcedureHistoryPDFAPIView, ResendObservedProcedureFlowAPIView, RejectInboxAPIView, ObservedInboxAPIView, ObservedProcedureFlowAPIView, FinalizeFlowListAPIView, RejectProcedureFlowAPIView, PendingFlowListAPIView, FinalizeProcedureFlowAPIView, DeriveProcedureFlowAPIView, ReceptionFlowListAPIView, ReceiveProcedureFlowAPIView, ProcedureListAPIView, MyAreasView, AreaViewSet, DocumentViewSet, AgencyViewSet, ProcedureCreateAPIView, DepartmentListAPIView, ProvinceListAPIView, DistrictListAPIView, CopyDecisionAPIView, BackupListView, BackupCreateView, BackupDownloadView
+from .views import CompanyViewSet, ProcedureCampoVerdePDFAPIView, ProcedureFlowDeleteView, AdminProcedureUpdateAPIView, GlobalBackupView, ProcedureFlowUpdateView, ProcedureSearchAPIView, GlobalBackupDownloadView, CheckScheduleAPIView, ProcedureConsultAPIView, SubsanarProcedureFlowAPIView, ProcedureCodePreviewAPIView, ProcedureHistorySimplicadoPDFAPIView, HolidayViewSet, WorkScheduleViewSet, ProcedureListVirtualesAPIView, VirtualFlowListAPIView, ProcedureVirtualCreateAPIView, UpdateProcedureCopiesAPIView, CopyInboxPendingAPIView, CopyInboxApprovedAPIView, TicketProcedureAPIView, ProcedureAnnulAPIView, ProcedureUpdateAPIView, SentFlowListAPIView, FlowDashboardAPIView, ProcedureHistoryPDFAPIView, ResendObservedProcedureFlowAPIView, RejectInboxAPIView, ObservedInboxAPIView, ObservedProcedureFlowAPIView, FinalizeFlowListAPIView, RejectProcedureFlowAPIView, PendingFlowListAPIView, FinalizeProcedureFlowAPIView, DeriveProcedureFlowAPIView, ReceptionFlowListAPIView, ReceiveProcedureFlowAPIView, ProcedureListAPIView, MyAreasView, AreaViewSet, DocumentViewSet, AgencyViewSet, ProcedureCreateAPIView, DepartmentListAPIView, ProvinceListAPIView, DistrictListAPIView, CopyDecisionAPIView, BackupListView, BackupCreateView, BackupDownloadView
 
 router = routers.DefaultRouter()
 
@@ -32,6 +32,7 @@ urlpatterns = [
     path('annulled-procedure/<int:pk>/', ProcedureAnnulAPIView.as_view()),
     path("history-procedure/<int:procedure_id>/pdf/", ProcedureHistoryPDFAPIView.as_view()),
     path("history-procedure-simplificado/<int:procedure_id>/pdf/", ProcedureHistorySimplicadoPDFAPIView.as_view()),
+    path("procedure/<int:procedure_id>/pdf/", ProcedureCampoVerdePDFAPIView.as_view()),
     path("ticket-procedure/<int:procedure_id>/pdf/", TicketProcedureAPIView.as_view()),
 
     path("copies-procedure/<int:pk>/", UpdateProcedureCopiesAPIView.as_view()),
@@ -68,5 +69,12 @@ urlpatterns = [
     path("backups/", BackupListView.as_view()),
     path("backups/create/", BackupCreateView.as_view()),
     path("backups/<int:pk>/download/", BackupDownloadView.as_view()),
+
+    # ADMIN DASHBOARD
+
+    path('procedures/search/',  ProcedureSearchAPIView.as_view()),
+    path('procedure/update/<int:pk>/', AdminProcedureUpdateAPIView.as_view()),
+    path("flows/<int:flow_id>/update/", ProcedureFlowUpdateView.as_view()),
+    path("flows/<int:flow_id>/delete/", ProcedureFlowDeleteView.as_view()),
 
 ] + router.urls

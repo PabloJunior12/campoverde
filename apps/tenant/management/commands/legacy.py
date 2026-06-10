@@ -125,6 +125,7 @@ class Command(BaseCommand):
                 migrate_procedure_files(
                     procedure=procedure,
                     filenames=item.get("archivo"),
+                    user=user
                 )
 
                 # 🔢 Calcular secuencia
