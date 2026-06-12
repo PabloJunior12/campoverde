@@ -836,9 +836,9 @@ class DeriveFlowSerializer(serializers.Serializer):
 
         origin_options = self.validated_data.get("origin_options", [])
 
-        is_special_origin = bool(
-            {"AUTHORIZED", "INFO"} & set(origin_options)
-        )
+        # is_special_origin = bool(
+        #     {"AUTHORIZED", "INFO"} & set(origin_options)
+        # )
         files = request.FILES.getlist("files")
         # 🔒 Desactivar NORMAL activo previo
         flow.is_active = False
@@ -864,7 +864,7 @@ class DeriveFlowSerializer(serializers.Serializer):
                     subject=flow.subject,
                     subject_derivar=subject_derivar,
                     is_active=True,
-                    is_to_finalize = is_special_origin,
+                    # is_to_finalize = is_special_origin,
                     origin_options = origin_options,
                     is_derive = True
                 )
@@ -892,7 +892,7 @@ class DeriveFlowSerializer(serializers.Serializer):
                     sent_by=user,
                     subject=subject_derivar,
                     subject_derivar=subject_derivar,
-                    is_to_finalize = is_special_origin,
+                    # is_to_finalize = is_special_origin,
                     origin_options = origin_options,
                     is_derive = True
                 )

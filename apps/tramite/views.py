@@ -17,7 +17,7 @@ from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
 from django.conf import settings
 from django.core.management import call_command
-
+from django.utils.dateparse import parse_datetime
 from datetime import datetime
 from weasyprint import HTML
 
@@ -577,38 +577,48 @@ class CopyDecisionAPIView(APIView):
         )
 
 # ----------- LIST MOVIMIENTOS
-class ProcedureConsultAPIView(generics.ListAPIView):
+class ProcedureConsultAPIView(APIView):
 
-    serializer_class = ProcedureListSerializer
-    pagination_class = CustomPagination
+    def get(self, request):
 
-    def get_queryset(self):
+        code = request.query_params.get("code")
+        type_tramite = request.query_params.get("type")
 
-        qs = Procedure.objects.select_related(
-            "from_area",
-            "to_area",
-            "agency",
-            "created_by"
-        ).order_by("-created_at")
-
-        # filtros
-        agency = self.request.query_params.get("agency")
-        code = self.request.query_params.get("code")
-        year = self.request.query_params.get("year")
-
-        if agency:
-            qs = qs.filter(agency_id=agency)
-
-        if code:
-            qs = qs.filter(
-                Q(code__icontains=code) |
-                Q(code_destino__icontains=code)
+        if not code or not type_tramite:
+            return Response(
+                {
+                    "error": "Debe enviar code y type"
+                },
+                status=status.HTTP_400_BAD_REQUEST
             )
 
-        if year:
-            qs = qs.filter(created_at__year=year)
+        procedure = (
+            Procedure.objects.select_related(
+                "from_area",
+                "to_area",
+                "agency",
+                "created_by"
+            )
+            .filter(
+                Q(code__icontains=code) |
+                Q(code_destino__icontains=code),
+                from_area__type=type_tramite
+            )
+            .order_by("-created_at")
+            .first()
+        )
 
-        return qs
+        if not procedure:
+            return Response(
+                {
+                    "error": "No encontrado"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ProcedureDetailSerializer(procedure)
+
+        return Response(serializer.data)
 
 class VirtualFlowListAPIView(generics.ListAPIView):
 
@@ -1737,6 +1747,14 @@ class ProcedureFlowUpdateView(APIView):
 
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        if 'created_at' in request.data:
+
+            flow.created_at = parse_datetime(
+                request.data['created_at']
+            )
+
+            flow.save(update_fields=['created_at'])
 
         return Response(
             {"message": "Trámite actualizado correctamente"},
