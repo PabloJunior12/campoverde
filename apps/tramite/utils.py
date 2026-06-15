@@ -263,7 +263,7 @@ def send_procedure_email(procedure, is_out_of_schedule=False):
     text_content = (
         f"Su trámite fue registrado correctamente.\n"
         f"Código de seguimiento: {procedure.tracking_code}\n"
-        f"Mesa de Partes Virtual – ADEA"
+        f"Mesa de Partes Virtual – Municipalidad Distrital - Campo Verde"
     )
 
     email = EmailMultiAlternatives(
@@ -298,7 +298,7 @@ def send_procedure_rejected_email(procedure, comment=""):
     if comment:
         text_content += f"Motivo del rechazo:\n{comment}\n\n"
 
-    text_content += "Mesa de Partes Virtual – ADEA"
+    text_content += "Mesa de Partes Virtual – Municipalidad Distrital - Campo Verde"
 
     email = EmailMultiAlternatives(
         subject=subject,

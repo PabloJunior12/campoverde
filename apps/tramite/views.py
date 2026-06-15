@@ -26,7 +26,6 @@ import os
 
 from .utils import generar_qr_base64, preview_procedure_code, ProcedureFilter, PendingFlowFilter, send_procedure_email, send_procedure_rejected_email, get_flow_status_display, get_flow_global_status_display, check_schedule, ScheduleResult
 
-
 class CustomPagination(PageNumberPagination):
 
     page_size = 5  # Número de registros por página
@@ -332,13 +331,13 @@ class ProcedureCreateAPIView(APIView):
             )
 
         # ❌ Fuera de horario laboral
-        # if schedule_status == ScheduleResult.OUT_OF_SCHEDULE:
-        #     return Response(
-        #         {
-        #             "error": "El registro de trámites solo está disponible dentro del horario laboral."
-        #         },
-        #         status=status.HTTP_403_FORBIDDEN
-        #     )
+        if schedule_status == ScheduleResult.OUT_OF_SCHEDULE:
+            return Response(
+                {
+                    "error": "El registro de trámites solo está disponible dentro del horario laboral."
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         serializer = ProcedureCreateSerializer(
             data=request.data,
