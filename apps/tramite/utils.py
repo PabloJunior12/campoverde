@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
-from django.utils.timezone import localtime
+from django.utils.timezone import localtime, now
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Q
@@ -12,6 +12,7 @@ import base64
 import os
 import random
 from io import BytesIO
+
 
 class ProcedureFilter(django_filters.FilterSet):
 
@@ -175,6 +176,18 @@ def preview_procedure_code(area: Area) -> str:
 
     return f"{number_formatted}-{year}"
 
+def generar_numeracion(area):
+    
+    anio = now().year
+
+    cantidad = Procedure.objects.filter(
+        from_area=area,
+        created_at__year=anio
+    ).count()
+
+    numero = cantidad + 1
+
+    return f"{str(numero).zfill(5)}-{anio}"
 
 def get_next_sequence(procedure):
     last = (

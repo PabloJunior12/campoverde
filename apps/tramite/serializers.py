@@ -14,7 +14,7 @@ from .models import (
 
 )
 
-from .utils import calculate_due_date, generate_procedure_code, get_next_sequence, get_virtual_areas, resolve_sequence_agency, check_schedule, ScheduleResult, generate_unique_tracking_code
+from .utils import calculate_due_date, generate_procedure_code, generar_numeracion, get_next_sequence, get_virtual_areas, resolve_sequence_agency, check_schedule, ScheduleResult, generate_unique_tracking_code
     
 
 import os
@@ -349,9 +349,6 @@ class ProcedureCreateSerializer(serializers.Serializer):
 
             created = []
 
-            # main_agency = Agency.objects.get(
-            #     id=settings.MAIN_AGENCY_ID
-            # )
 
             for area in destination_areas:
 
@@ -375,6 +372,7 @@ class ProcedureCreateSerializer(serializers.Serializer):
                     due_date=calculate_due_date(now_date),
                     code=None,
                     is_registered=False,
+                    numeracion=generar_numeracion(from_area),
                     **validated_data
                 )
 

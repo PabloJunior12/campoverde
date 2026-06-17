@@ -615,7 +615,10 @@ class ProcedureConsultAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = ProcedureDetailSerializer(procedure)
+        serializer = ProcedureDetailSerializer(
+            procedure,
+            context={"request": request}
+        )
 
         return Response(serializer.data)
 

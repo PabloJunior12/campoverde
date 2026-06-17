@@ -304,6 +304,13 @@ class Procedure(models.Model):
         blank=True
     )
 
+    numeracion = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+    )
+
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -317,7 +324,6 @@ class Procedure(models.Model):
         if not self.due_date:
             return False
         return now() > self.due_date
-
 
     @property
     def is_blocked_effective(self):

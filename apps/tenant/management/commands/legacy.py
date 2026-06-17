@@ -49,8 +49,7 @@ class Command(BaseCommand):
                 LEFT JOIN areas ad ON ad.id = t.destino_id
                        
                 LEFT JOIN documentos d ON d.id = t.documento_id
-
-                WHERE YEAR(t.created_at) = 2026           
+       
                            
             """)
 
@@ -65,6 +64,7 @@ class Command(BaseCommand):
             try:
 
                 tramite_type = item["tipo_tramite"]
+                numeracion = item["numeracion"]
                 user = User.objects.first()
                 agency = Agency.objects.first()
                 document = (
@@ -98,6 +98,7 @@ class Command(BaseCommand):
                 procedure = Procedure.objects.create(
                     code=item["codigo"],
                     agency=agency,
+                    numeracion=numeracion,
                     document_type=document,
                     document_number=item["documento_nro"],
                     folios=item["folios_nro"] or 0,
