@@ -62,6 +62,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
+    # 🔒 Obligatorio cambiar contraseña
+    must_change_password = models.BooleanField(default=True)
+
     USERNAME_FIELD = 'username'  # <<< Cambiar a username como identificador principal
     REQUIRED_FIELDS = ['name']  # Email ahora es campo obligatorio adicional
 

@@ -95,6 +95,7 @@ class LoginView(APIView):
             "can_finalize_procedure": user.can_finalize_procedure,
             "token": token.key,
             "permissions": permissions_data,
+            "must_change_password" : user.must_change_password
         
         }
 
@@ -262,6 +263,9 @@ class ChangeMyPasswordView(APIView):
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Ya no obligar a cambiar
+        user.must_change_password = False
 
         user.set_password(serializer.validated_data['password'])
         user.save()
