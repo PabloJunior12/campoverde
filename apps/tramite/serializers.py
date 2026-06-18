@@ -221,7 +221,11 @@ class ProcedureCreateSerializer(serializers.Serializer):
     document_type = serializers.PrimaryKeyRelatedField(
         queryset=Document.objects.all()
     )
-    document_number = serializers.CharField()
+    document_number = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True
+    )
     subject = serializers.CharField()
     folios = serializers.IntegerField(
     min_value=0
