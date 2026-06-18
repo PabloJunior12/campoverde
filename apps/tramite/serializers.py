@@ -147,6 +147,7 @@ class UserAreaSerializer(serializers.ModelSerializer):
 class ProcedureCodePreviewSerializer(serializers.Serializer):
 
     code = serializers.CharField()
+    numeracion = serializers.CharField()
 
 class DocumentSerializer(serializers.ModelSerializer):
     

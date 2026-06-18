@@ -370,10 +370,26 @@ def build_procedure_email_html(procedure, is_out_of_schedule):
                 a través del portal institucional.
             </p>
 
+            <div style="text-align:center; margin:30px 0;">
+                <a href="https://tramite.municampoverde.gob.pe/consultar"
+                style="
+                        background:#0d6efd;
+                        color:#ffffff;
+                        text-decoration:none;
+                        padding:14px 24px;
+                        border-radius:6px;
+                        display:inline-block;
+                        font-weight:bold;
+                        font-size:15px;
+                ">
+                    🔎 Dar seguimiento a mi trámite
+                </a>
+            </div>
+            
             <p style="margin-top:25px;">
                 Atentamente,<br>
                 <strong>Mesa de Partes Virtual</strong><br>
-                <span style="color:#6c757d;">ADEA</span>
+                <span style="color:#6c757d;">Municipalidad Distrital - Campo Verde</span>
             </p>
 
             <hr style="border:none; border-top:1px solid #e9ecef; margin:25px 0;">

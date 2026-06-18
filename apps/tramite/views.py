@@ -24,7 +24,7 @@ from weasyprint import HTML
 import subprocess
 import os
 
-from .utils import generar_qr_base64, preview_procedure_code, ProcedureFilter, PendingFlowFilter, send_procedure_email, send_procedure_rejected_email, get_flow_status_display, get_flow_global_status_display, check_schedule, ScheduleResult
+from .utils import generar_qr_base64, preview_procedure_code, generar_numeracion, ProcedureFilter, PendingFlowFilter, send_procedure_email, send_procedure_rejected_email, get_flow_status_display, get_flow_global_status_display, check_schedule, ScheduleResult
 
 class CustomPagination(PageNumberPagination):
 
@@ -271,9 +271,11 @@ class ProcedureVirtualCreateAPIView(APIView):
         )
 
         message = (
-            "Su documento fue registrado correctamente. "
-            "Se ha enviado un correo con su código de seguimiento: "
-            f"{procedure.tracking_code}"
+        "Su documento fue registrado correctamente. "
+        "Se ha enviado un correo con su código de seguimiento: "
+        f"<b>{procedure.tracking_code}.</b> "
+        "Si no encuentra el correo en su bandeja de entrada, "
+        "por favor revise la carpeta de spam o correo no deseado."
         )
 
         return Response(
@@ -308,12 +310,15 @@ class ProcedureCodePreviewAPIView(APIView):
             )
 
         code = preview_procedure_code(area)
+        numeracion = generar_numeracion(area)
 
         serializer = ProcedureCodePreviewSerializer({
-            "code": code
+            "code": code,
+            "numeracion": numeracion
         })
 
         return Response(serializer.data)
+
 
 class ProcedureCreateAPIView(APIView):
 
