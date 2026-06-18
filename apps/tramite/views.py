@@ -319,7 +319,6 @@ class ProcedureCodePreviewAPIView(APIView):
 
         return Response(serializer.data)
 
-
 class ProcedureCreateAPIView(APIView):
 
     def post(self, request):

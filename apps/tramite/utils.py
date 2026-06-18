@@ -12,7 +12,7 @@ import base64
 import os
 import random
 from io import BytesIO
-
+import re
 
 class ProcedureFilter(django_filters.FilterSet):
 
@@ -177,17 +177,34 @@ def preview_procedure_code(area: Area) -> str:
     return f"{number_formatted}-{year}"
 
 def generar_numeracion(area):
-    
+
     anio = now().year
 
-    cantidad = Procedure.objects.filter(
-        from_area=area,
-        created_at__year=anio
-    ).count()
+    ultimo = (
+        Procedure.objects
+        .filter(
+            from_area=area,
+            created_at__year=anio,
+            numeracion__isnull=False
+        )
+        .order_by('-id')
+        .first()
+    )
 
-    numero = cantidad + 1
+    if ultimo and ultimo.numeracion:
 
-    return f"{str(numero).zfill(5)}-{anio}"
+        match = re.match(r"(\d+)-(\d{4})", ultimo.numeracion)
+
+        if match:
+            numero_actual = int(match.group(1))
+            nuevo_numero = numero_actual + 1
+        else:
+            nuevo_numero = 1
+
+    else:
+        nuevo_numero = 1
+
+    return f"{str(nuevo_numero).zfill(5)}-{anio}"
 
 def get_next_sequence(procedure):
     last = (
