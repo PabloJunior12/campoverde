@@ -3,6 +3,8 @@ from django.conf import settings
 from django.utils.timezone import now
 import uuid
 import os
+from django.db.models.functions import Cast
+from django.db.models import IntegerField
 
 User = settings.AUTH_USER_MODEL
 
@@ -140,9 +142,11 @@ class Area(models.Model):
 
         if not self.code:
 
-            last= Area.objects.order_by('-id').first()
+            last = Area.objects.annotate(
+                code_int=Cast('code', IntegerField())
+            ).order_by('-code_int').first()
 
-            next_number = 1 if not last else int(last.code) + 1
+            next_number = 1 if not last else last.code_int + 1
 
             self.code = str(next_number).zfill(3)
 
