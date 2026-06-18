@@ -484,6 +484,24 @@ class ProcedureFlow(models.Model):
         blank=True
     )
 
+    document_type = models.ForeignKey(
+        Document,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+
+    document_number = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    folios = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
 
     class Meta:
 

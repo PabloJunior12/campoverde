@@ -780,6 +780,12 @@ class ReceiveFlowSerializer(serializers.Serializer):
             origin_options=flow.origin_options,
             is_to_observed=flow.is_to_observed,
             is_derive=flow.is_derive,
+
+            # 👇 NUEVO
+            document_type=flow.document_type,
+            document_number=flow.document_number,
+            folios=flow.folios,
+
         )
 
         return new_flow
@@ -787,6 +793,22 @@ class ReceiveFlowSerializer(serializers.Serializer):
 # DERVIVAR
 class DeriveFlowSerializer(serializers.Serializer):
     
+    document_type = serializers.PrimaryKeyRelatedField(
+        queryset=Document.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    document_number = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True
+    )
+
+    folios = serializers.IntegerField(
+        required=False
+    )
+
     origin_options = serializers.JSONField(required=False)
 
     destination_area = serializers.PrimaryKeyRelatedField(
@@ -833,16 +855,29 @@ class DeriveFlowSerializer(serializers.Serializer):
         user = request.user
         procedure = flow.procedure
 
-        dest_areas = self.validated_data.pop("destination_area", None)
+        destination_area = self.validated_data.pop("destination_area", None)
         copy_areas = self.validated_data.get("copy_areas", [])
         subject_derivar = self.validated_data.get("subject_derivar", "")
-
         origin_options = self.validated_data.get("origin_options", [])
 
-        # is_special_origin = bool(
-        #     {"AUTHORIZED", "INFO"} & set(origin_options)
-        # )
+        # 👇 NUEVOS DATOS DOCUMENTO
+        new_document_type = self.validated_data.get(
+            "document_type",
+            procedure.document_type
+        )
+
+        new_document_number = self.validated_data.get(
+            "document_number",
+            procedure.document_number
+        )
+
+        new_folios = self.validated_data.get(
+            "folios",
+            procedure.folios
+        )
+
         files = request.FILES.getlist("files")
+
         # 🔒 Desactivar NORMAL activo previo
         flow.is_active = False
         flow.save(update_fields=["is_active"])
@@ -851,29 +886,34 @@ class DeriveFlowSerializer(serializers.Serializer):
 
         first_sequence = get_next_sequence(procedure)
 
-        destination_areas = [dest_areas] if dest_areas else []
+        destination_areas = [destination_area] if destination_area else []
 
-        # ➡️ Crear flows NORMAL (SENT)
+        # ➡️ Crear flows NORMAL
         for area in destination_areas:
+
             created.append(
                 ProcedureFlow.objects.create(
                     procedure=procedure,
                     sequence=get_next_sequence(procedure),
                     flow_type=ProcedureFlow.NORMAL,
-                    status = ProcedureFlow.SENT,
+                    status=ProcedureFlow.SENT,
                     from_area=flow.to_area,
                     to_area=area,
                     sent_by=user,
                     subject=flow.subject,
                     subject_derivar=subject_derivar,
                     is_active=True,
-                    # is_to_finalize = is_special_origin,
-                    origin_options = origin_options,
-                    is_derive = True
+                    origin_options=origin_options,
+                    is_derive=True,
+
+                    # 👇 SOLO SI CAMBIÓ
+                    document_type=new_document_type,
+                    document_number=new_document_number,
+                    folios=new_folios,
                 )
             )
 
-        # 📎 Archivos (uno por trámite)
+        # 📎 Archivos
         for file in files:
             ProcedureFile.objects.create(
                 procedure=procedure,
@@ -882,8 +922,9 @@ class DeriveFlowSerializer(serializers.Serializer):
                 original_name=file.name
             )
 
-        # 📎 Crear flows COPY (SENT)
+        # 📋 FLOWS COPY
         for area in copy_areas:
+
             created.append(
                 ProcedureFlow.objects.create(
                     procedure=procedure,
@@ -895,9 +936,13 @@ class DeriveFlowSerializer(serializers.Serializer):
                     sent_by=user,
                     subject=subject_derivar,
                     subject_derivar=subject_derivar,
-                    # is_to_finalize = is_special_origin,
-                    origin_options = origin_options,
-                    is_derive = True
+                    origin_options=origin_options,
+                    is_derive=True,
+
+                    # 👇 TAMBIÉN EN COPIAS
+                    document_type=new_document_type,
+                    document_number=new_document_number,
+                    folios=new_folios,
                 )
             )
 
@@ -975,6 +1020,12 @@ class FinalizeFlowSerializer(serializers.Serializer):
             is_derive = flow.is_derive,
 
             finalize_comment = comment if comment else None,
+
+            # 👇 NUEVO
+            document_type=flow.document_type,
+            document_number=flow.document_number,
+            folios=flow.folios,
+
         )
 
         ProcedureFlow.objects.filter(
@@ -1040,7 +1091,12 @@ class RejectFlowSerializer(serializers.Serializer):
             sent_by=user,
             is_to_finalize=flow.is_to_finalize,
             origin_options=flow.origin_options,
-            is_derive = flow.is_derive
+            is_derive = flow.is_derive,
+
+            # 👇 NUEVO
+            document_type=flow.document_type,
+            document_number=flow.document_number,
+            folios=flow.folios,
         )
 
         return rejected_flow
@@ -1097,7 +1153,13 @@ class ObservedFlowSerializer(serializers.Serializer):
             sent_by=user,
             is_to_finalize=flow.is_to_finalize,
             origin_options=flow.origin_options,
-            is_derive = flow.is_derive
+            is_derive = flow.is_derive,
+
+            # 👇 NUEVO
+            document_type=flow.document_type,
+            document_number=flow.document_number,
+            folios=flow.folios,
+               
         )
 
         return new_flow
@@ -1204,6 +1266,11 @@ class ResendObservedFlowSerializer(serializers.Serializer):
             origin_options=flow.origin_options,
             is_to_observed=True,
             is_derive=flow.is_derive,
+
+            # 👇 NUEVO
+            document_type=flow.document_type,
+            document_number=flow.document_number,
+            folios=flow.folios,
         )
 
         return new_flow
