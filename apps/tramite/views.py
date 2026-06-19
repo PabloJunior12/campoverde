@@ -1738,7 +1738,7 @@ class ProcedureFlowUpdateView(APIView):
         flow = get_object_or_404(
             ProcedureFlow,
             id=flow_id,
-            flow_type=ProcedureFlow.NORMAL,
+        
         )
 
         serializer = ProcedureFlowUpdateSerializer(

@@ -1396,7 +1396,6 @@ class ProcedureDetailSerializer(serializers.ModelSerializer):
 
 # UPDATE FLOW
 
-
 class AdminProcedureUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -1476,10 +1475,23 @@ class AdminProcedureUpdateSerializer(serializers.ModelSerializer):
 class ProcedureFlowUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
-
         model = ProcedureFlow
         fields = '__all__'
 
+    def validate(self, data):
 
+        flow: ProcedureFlow = self.instance
+
+        # validar si tiene registros posteriores
+        has_next_flows = ProcedureFlow.objects.filter(
+            procedure=flow.procedure,
+            sequence__gt=flow.sequence,
+            is_active=True
+        ).exists()
+
+        if has_next_flows:
+            raise serializers.ValidationError("No se puede editar porque existen movimientos posteriores.")
+
+        return data
  
 

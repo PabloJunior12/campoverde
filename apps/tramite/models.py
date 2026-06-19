@@ -502,7 +502,6 @@ class ProcedureFlow(models.Model):
         blank=True
     )
 
-
     class Meta:
 
         ordering = ["sequence"]
