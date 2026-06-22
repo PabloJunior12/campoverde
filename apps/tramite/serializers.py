@@ -812,6 +812,7 @@ class DeriveFlowSerializer(serializers.Serializer):
     origin_options = serializers.JSONField(required=False)
 
     destination_area = serializers.PrimaryKeyRelatedField(
+        many=True,
         queryset=Area.objects.all(),
         required=False,
         allow_null=True
@@ -855,7 +856,7 @@ class DeriveFlowSerializer(serializers.Serializer):
         user = request.user
         procedure = flow.procedure
 
-        destination_area = self.validated_data.pop("destination_area", None)
+        destination_areas = self.validated_data.pop("destination_area", [])
         copy_areas = self.validated_data.get("copy_areas", [])
         subject_derivar = self.validated_data.get("subject_derivar", "")
         origin_options = self.validated_data.get("origin_options", [])
@@ -886,7 +887,6 @@ class DeriveFlowSerializer(serializers.Serializer):
 
         first_sequence = get_next_sequence(procedure)
 
-        destination_areas = [destination_area] if destination_area else []
 
         # ➡️ Crear flows NORMAL
         for area in destination_areas:
@@ -894,7 +894,7 @@ class DeriveFlowSerializer(serializers.Serializer):
             created.append(
                 ProcedureFlow.objects.create(
                     procedure=procedure,
-                    sequence=get_next_sequence(procedure),
+                    sequence=first_sequence,
                     flow_type=ProcedureFlow.NORMAL,
                     status=ProcedureFlow.SENT,
                     from_area=flow.to_area,
