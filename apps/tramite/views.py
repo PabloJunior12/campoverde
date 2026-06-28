@@ -1,4 +1,4 @@
-from .serializers import CompanySerializer, AdminProcedureUpdateSerializer, ProcedureFlowUpdateSerializer,  ProvinceSerializer, ProcedureDetailSerializer, SubsanarFlowSerializer, ProcedureCodePreviewSerializer, SystemBackupSerializer, GlobalBackupSerializer,  DepartmentSerializer, ProcedureUpdateCopiesSerializer, DistrictSerializer, ProcedureAnnulSerializer,  WorkScheduleSerializer, HolidaySerializer, ProcedureUpdateSerializer, ResendObservedFlowSerializer, RejectFlowSerializer, ObservedFlowSerializer, AreaSerializer, FinalizeFlowSerializer, DeriveFlowSerializer, ProcedureFlowSerializer, ReceiveFlowSerializer, DocumentSerializer, ProcedureListSerializer, MyAreaSerializer, AgencySerializer, ProcedureCreateSerializer
+from .serializers import MassiveDeriveFlowSerializer, CompanySerializer, AdminProcedureUpdateSerializer, ProcedureFlowUpdateSerializer,  ProvinceSerializer, ProcedureDetailSerializer, SubsanarFlowSerializer, ProcedureCodePreviewSerializer, SystemBackupSerializer, GlobalBackupSerializer,  DepartmentSerializer, ProcedureUpdateCopiesSerializer, DistrictSerializer, ProcedureAnnulSerializer,  WorkScheduleSerializer, HolidaySerializer, ProcedureUpdateSerializer, ResendObservedFlowSerializer, RejectFlowSerializer, ObservedFlowSerializer, AreaSerializer, FinalizeFlowSerializer, DeriveFlowSerializer, ProcedureFlowSerializer, ReceiveFlowSerializer, DocumentSerializer, ProcedureListSerializer, MyAreaSerializer, AgencySerializer, ProcedureCreateSerializer
 from .models import Company, Department, Province, District, UserArea, Area, Document, Agency, Procedure, ProcedureFlow, GlobalBackup, ProcedureFile, Holiday, WorkSchedule, SystemBackup
 
 from rest_framework import status, viewsets, generics
@@ -1074,6 +1074,40 @@ class DeriveProcedureFlowAPIView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+# DERIVAR MASSIVE
+
+class MassiveDeriveProcedureFlowAPIView(APIView):
+
+    def post(self, request):
+
+        serializer = MassiveDeriveFlowSerializer(
+            data=request.data,
+            context={"request": request}
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        created = serializer.save()
+
+        return Response({
+
+            "message":
+                f"{len(created)} expedientes derivados correctamente",
+
+            "created_flows": [
+
+                {
+                    "id": f.id,
+                    "sequence": f.sequence,
+                    "to_area": f.to_area.name
+                }
+
+                for f in created
+
+            ]
+
+        })
 
 # OBSERVAR
 class ObservedProcedureFlowAPIView(APIView):

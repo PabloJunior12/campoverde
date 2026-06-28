@@ -947,7 +947,110 @@ class DeriveFlowSerializer(serializers.Serializer):
             )
 
         return created
-    
+
+# DERVIVAR MASSIVE    
+class MassiveDeriveFlowSerializer(serializers.Serializer):
+
+    flow_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=True
+    )
+
+    destination_area = serializers.PrimaryKeyRelatedField(
+        queryset=Area.objects.all()
+    )
+
+    origin_options = serializers.JSONField(required=False)
+
+    def validate(self, data):
+
+        request = self.context["request"]
+
+        area_id = request.headers.get("X-Area-Id")
+
+        flows = ProcedureFlow.objects.select_related(
+            "procedure",
+            "to_area"
+        ).filter(
+            id__in=data["flow_ids"],
+            flow_type=ProcedureFlow.NORMAL,
+            status=ProcedureFlow.RECEIVED
+        )
+
+        if not flows.exists():
+            raise serializers.ValidationError(
+                "No hay expedientes válidos"
+            )
+
+        validated_flows = []
+
+        for flow in flows:
+
+            # mismo control que tu derivación normal
+            if str(flow.to_area_id) != str(area_id):
+
+                raise serializers.ValidationError(
+                    f"No puedes derivar el expediente {flow.id}"
+                )
+
+            if flow.procedure.is_expired:
+
+                raise serializers.ValidationError(
+                    f"El expediente {flow.procedure.code} está vencido"
+                )
+
+            validated_flows.append(flow)
+
+        data["flows"] = validated_flows
+
+        return data
+
+    @transaction.atomic
+    def save(self):
+
+        request = self.context["request"]
+
+        user = request.user
+        origin_options = self.validated_data.get("origin_options", [])
+
+        destination_area = self.validated_data["destination_area"]
+
+        flows = self.validated_data["flows"]
+
+        created = []
+
+        for flow in flows:
+
+            procedure = flow.procedure
+
+            # desactivar actual
+            flow.is_active = False
+            flow.save(update_fields=["is_active"])
+
+            sequence = get_next_sequence(procedure)
+
+            new_flow = ProcedureFlow.objects.create(
+                procedure=procedure,
+                sequence=sequence,
+                flow_type=ProcedureFlow.NORMAL,
+                status=ProcedureFlow.SENT,
+                origin_options=origin_options,
+                from_area=flow.to_area,
+                to_area=destination_area,
+
+                sent_by=user,
+
+                subject=flow.subject,
+                subject_derivar=flow.subject_derivar if flow.subject_derivar else flow.subject,
+
+                is_active=True,
+                is_derive=True,
+            )
+
+            created.append(new_flow)
+
+        return created
+
 # FINALIZAR
 class FinalizeFlowSerializer(serializers.Serializer):
 
@@ -1398,6 +1501,10 @@ class ProcedureDetailSerializer(serializers.ModelSerializer):
 
 class AdminProcedureUpdateSerializer(serializers.ModelSerializer):
 
+    created_at = serializers.DateTimeField(
+        required=False
+    )
+
     class Meta:
         model = Procedure
         fields = [
@@ -1420,54 +1527,31 @@ class AdminProcedureUpdateSerializer(serializers.ModelSerializer):
             "from_area",
             "to_area",
             "is_virtual",
+            'created_at'
         ]
-
-    # def validate(self, data):
-
-    #     procedure: Procedure = self.context["procedure"]
-
-    #     flows_qs = ProcedureFlow.objects.filter(procedure=procedure, flow_type=ProcedureFlow.NORMAL)
-
-    #     # ❌ No editable si tiene más de 1 flujo
-    #     if flows_qs.count() > 1:
-    #         raise serializers.ValidationError(
-    #             "Este trámite no se puede editar porque ya tiene más de un flujo"
-    #         )
-
-    #     return data
 
     @transaction.atomic
     def update(self, instance, validated_data):
 
-        """
-        - Actualiza Procedure
-        - Si existe 1 flow, sincroniza subject y to_area
-        """
+        created_at = validated_data.pop(
+            "created_at",
+            None
+        )
 
-        # 1️⃣ Actualizar Procedure
-        procedure = super().update(instance, validated_data)
+        # actualizar procedure
+        procedure = super().update(
+            instance,
+            validated_data
+        )
 
-        # 2️⃣ Obtener el único flujo (si existe)
-        # flow = (
-        #     ProcedureFlow.objects
-        #     .filter(procedure=procedure)
-        #     .order_by("created_at")
-        #     .first()
-        # )
+        # actualizar fecha manualmente
+        if created_at:
 
-        # if flow:
-        #     update_fields = []
+            procedure.created_at = created_at
 
-        #     if "subject" in validated_data:
-        #         flow.subject = procedure.subject
-        #         update_fields.append("subject")
-
-        #     if "to_area" in validated_data:
-        #         flow.to_area = procedure.to_area
-        #         update_fields.append("to_area")
-
-        #     if update_fields:
-        #         flow.save(update_fields=update_fields)
+            procedure.save(
+                update_fields=["created_at"]
+            )
 
         return procedure
 
