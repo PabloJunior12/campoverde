@@ -1817,3 +1817,47 @@ class ProcedureFlowDeleteView(APIView):
             {"message": "Flujo eliminado correctamente"},
             status=status.HTTP_200_OK
         )
+
+class ProcedureFlowCargoApiView(APIView):
+
+    def post(self, request):
+
+        ids = request.data.get("ids", [])
+        area_id = request.data.get("area_id")
+
+        area = Area.objects.get(pk = area_id)
+
+        flows = (
+            ProcedureFlow.objects
+            .select_related(
+                "procedure",
+                "procedure__document_type",
+            )
+            .filter(id__in=ids)
+            .order_by("-created_at")
+        )
+
+        html_string = render_to_string(
+            "reports/cargo.html",
+            {
+                "area" : area,
+                "flows": flows,
+                "total": flows.count()
+            }
+        )
+
+        pdf = HTML(
+            string=html_string,
+            base_url=request.build_absolute_uri("/")
+        ).write_pdf()
+
+        response = HttpResponse(
+            pdf,
+            content_type="application/pdf"
+        )
+
+        response["Content-Disposition"] = (
+            'inline; filename="cargo.pdf"'
+        )
+
+        return response
