@@ -586,6 +586,7 @@ class ProcedureConsultAPIView(APIView):
 
         code = request.query_params.get("code")
         type_tramite = request.query_params.get("type")
+        year = request.query_params.get("year")
 
         if not code or not type_tramite:
             return Response(
@@ -595,7 +596,7 @@ class ProcedureConsultAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        procedure = (
+        qs = (
             Procedure.objects.select_related(
                 "from_area",
                 "to_area",
@@ -607,9 +608,12 @@ class ProcedureConsultAPIView(APIView):
                 Q(code_destino__icontains=code),
                 from_area__type=type_tramite
             )
-            .order_by("-created_at")
-            .first()
         )
+
+        if year:
+            qs = qs.filter(created_at__year=year)
+
+        procedure = qs.order_by("-created_at").first()
 
         if not procedure:
             return Response(
