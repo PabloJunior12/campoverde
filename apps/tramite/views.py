@@ -713,7 +713,7 @@ class PendingFlowListAPIView(generics.ListAPIView):
                 is_active=True
             )
             .select_related("procedure", "from_area")
-            .order_by("-created_at")
+            .order_by("-procedure__created_at", "-created_at")
         )
 
 # RECEPCIONADOS
@@ -739,7 +739,7 @@ class ReceptionFlowListAPIView(generics.ListAPIView):
                 is_active=True
             )
             .select_related("procedure", "from_area")
-            .order_by("-created_at")
+            .order_by("-procedure__created_at", "-created_at")
         )
 
 # ENVIADOS
@@ -765,7 +765,7 @@ class SentFlowListAPIView(generics.ListAPIView):
                 is_to_observed=False,   #  clave
             )
             .select_related("procedure", "to_area")
-            .order_by("-created_at")
+            .order_by("-procedure__created_at", "-created_at")
         )
 
 # COPIAS
@@ -793,7 +793,7 @@ class CopyInboxPendingAPIView(generics.ListAPIView):
                 "from_area",
                 "to_area"
             )
-            .order_by("-created_at")
+            .order_by("-procedure__created_at", "-created_at")
         )
 
 class CopyInboxApprovedAPIView(generics.ListAPIView):
@@ -880,7 +880,7 @@ class FinalizeFlowListAPIView(generics.ListAPIView):
                 Q(procedure__from_area=area)        # O trámites de su agencia
             )
             .select_related("procedure", "from_area")
-            .order_by("-created_at")
+            .order_by("-procedure__created_at", "-created_at")
         )
 
 # RECHAZADOS
@@ -917,7 +917,7 @@ class RejectInboxAPIView(generics.ListAPIView):
                 last_sender_area=area_id
             )
             .select_related("procedure", "from_area")
-            .order_by("-created_at")
+            .order_by("-procedure__created_at", "-created_at")
         )
 
 # OBSERVADOS
@@ -955,7 +955,7 @@ class ObservedInboxAPIView(generics.ListAPIView):
                 is_active=True
             )
             .select_related("procedure", "from_area")
-            .order_by("-created_at")
+            .order_by("-procedure__created_at", "-created_at")
         )
     
 # ----------- PROCEDURE MOVIMIENTOS
