@@ -712,6 +712,9 @@ class PendingFlowListAPIView(generics.ListAPIView):
                 status=ProcedureFlow.SENT,
                 is_active=True
             )
+           .exclude(
+                procedure__code__endswith='-2025'
+            )
             .select_related("procedure", "from_area")
             .order_by("-procedure__created_at", "-created_at")
         )
@@ -737,6 +740,9 @@ class ReceptionFlowListAPIView(generics.ListAPIView):
                 flow_type=ProcedureFlow.NORMAL,
                 status=ProcedureFlow.RECEIVED,
                 is_active=True
+            )
+            .exclude(
+                procedure__code__endswith='-2025'
             )
             .select_related("procedure", "from_area")
             .order_by("-procedure__created_at", "-created_at")
