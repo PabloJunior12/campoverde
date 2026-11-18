@@ -1565,8 +1565,13 @@ class ProcedureFlowUpdateSerializer(serializers.ModelSerializer):
     def validate(self, data):
 
         flow: ProcedureFlow = self.instance
+        request = self.context.get("request")
+        print(request.user.is_staff)
+        # Si es staff, permitir la edición sin restricciones
+        if request and request.user.is_staff:
+            return data
 
-        # validar si tiene registros posteriores
+        # Validar si tiene registros posteriores
         has_next_flows = ProcedureFlow.objects.filter(
             procedure=flow.procedure,
             sequence__gt=flow.sequence,
@@ -1574,7 +1579,9 @@ class ProcedureFlowUpdateSerializer(serializers.ModelSerializer):
         ).exists()
 
         if has_next_flows:
-            raise serializers.ValidationError("No se puede editar porque existen movimientos posteriores.")
+            raise serializers.ValidationError(
+                "No se puede editar porque existen movimientos posteriores."
+            )
 
         return data
  

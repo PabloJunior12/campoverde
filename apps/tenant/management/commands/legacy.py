@@ -31,6 +31,7 @@ def migrate_procedure_files(procedure, filenames, user):
             )
 
 class Command(BaseCommand):
+    
     help = "Migrar procedimientos desde MySQL legacy"
 
     def handle(self, *args, **options):
